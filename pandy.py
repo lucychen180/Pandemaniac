@@ -30,5 +30,6 @@ seeds = heapq.nlargest(num_seeds, node_degs, key=(lambda pair : pair[1]))
 
 # Output seed nodes
 with open('seeds.txt', 'w') as f:
-    for node, deg in seeds:
-        print(node, file=f)
+    for round in range(50):
+        for node, deg in seeds:
+            print(node, file=f)
