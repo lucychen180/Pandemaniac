@@ -20,6 +20,29 @@ def load_graph_from_json(filename):
 
     return G
 
+def gravity_centrality(G):
+    '''
+    Returns the gravity centrality (global) of the graph.
+    @param G: graph
+    @return dict, keys are nodes, values are centralities
+    '''
+    res = {}
+    k_index = nx.core_number(G)
+    for node in G.nodes():
+        # find nodes with a distance of at most 3 from node
+        dist = nx.single_source_shortest_path_length(G, source = node, cutoff = 3)
+        neighbors = list(dist.keys())
+        neighbors.remove(node)
+
+        # compute gravity centrality of node
+        grav_centrality = 0
+        for neighbor in neighbors:
+            grav_centrality += (k_index[node] * k_index[neighbor] / (dist[neighbor] ** 2))
+
+        res[node] = grav_centrality
+
+    return res
+
 def seed_n_nodes_degree(G, n):
     '''
     TA strategy: picks the n nodes with the largest degrees.
@@ -47,21 +70,22 @@ def seed_n_nodes_basic(G, n, num_players, threshold = 0.75):
     @return seeds: a list of nodes to seed in the graph
     '''
 
-    # we use a combination of eigenvector centrality, voterank, and degree centrality
-    eigen_centralities = nx.eigenvector_centrality(G)
+    # we use a combination of eigenvector centrality and gravity centrality
+    eigen_centralities, grav_centralities = nx.eigenvector_centrality(G), gravity_centrality(G)
     eigen_nodes = list(G.nodes())
-    eigen_nodes.sort(reverse = True, key = (lambda node: eigen_centralities[node]))
+    eigen_nodes.sort(reverse = True, key = (lambda node: eigen_centralities[node])) # nodes sorted in descending order of eigenvector centrality
     # voteranks = nx.voterank(G, max_iter = 2000) # this is kind of shit for the 1v1 test graph, but i feel like it might be better in real competition?
 
+    gravity_nodes = list(G.nodes())
+    gravity_nodes.sort(reverse = True, key = (lambda node: grav_centralities[node])) # nodes sorted in descending order of gravity centrality
 
-    # construct total rank from eigenrank and voterank
-    # total_rank_dict = {}
-    # for node in G.nodes():
-    #     if node in voteranks: # i think isolated nodes might not be in it
-    #         total_rank_dict[node] = eigen_nodes.index(node) + voteranks.index(node)
+    # construct total rank from eigenrank and gravity rank
+    total_rank_dict = {}
+    for node in G.nodes():
+        total_rank_dict[node] = eigen_nodes.index(node) + gravity_nodes.index(node) # avg of two ranks
 
-    # totalranks = list(total_rank_dict.keys())
-    # totalranks.sort(key = (lambda node: total_rank_dict[node])) # in order of increasing rank
+    totalranks = list(total_rank_dict.keys())
+    totalranks.sort(key = (lambda node: total_rank_dict[node])) # in order of increasing rank
 
     seeds = []
     comp = list(community.label_propagation_communities(G)) # girvan newman too slow
@@ -98,9 +122,10 @@ def seed_n_nodes_basic(G, n, num_players, threshold = 0.75):
         cluster = comp[i] # list of nodes in the graph corresponding to cluster
         num_seeds = seed_nums[i]
 
-        possible_seeds = eigen_nodes[:math.ceil(num_seeds * math.sqrt(num_players - 1))]
+        possible_seeds = totalranks[:math.ceil(num_seeds * math.sqrt(num_players - 1))]
         cluster_seeds = random.sample(possible_seeds, num_seeds)
         seeds.extend(cluster_seeds)
 
     assert len(seeds) == n # idk lol
+    # print(seeds)
     return seeds
