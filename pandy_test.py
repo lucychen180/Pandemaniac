@@ -23,8 +23,11 @@ for num_seeds in range(5, 30, 5):
     strategy_dict_2 = {}
     strategy_dict_1['TA_strategy_graph1'] = seed_n_nodes_degree(graph_1, num_seeds)
     strategy_dict_2['TA_strategy_graph2'] = seed_n_nodes_degree(graph_2, num_seeds)
-    strategy_dict_1['basic_graph1'] = neighbor_centrality(graph_1, num_seeds, num_players)[1]
-    strategy_dict_2['basic_graph2'] = neighbor_centrality(graph_2, num_seeds, num_players)[1]
+    strategy_dict_1['basic_graph1'] = cluster_neighbor_centrality(graph_1, num_seeds, num_players)
+    strategy_dict_2['basic_graph2'] = cluster_neighbor_centrality(graph_2, num_seeds, num_players)
+
+    # strategy_dict_1['basic_graph1'] = neighbor_centrality(graph_1, num_seeds, num_players)[1]
+    # strategy_dict_2['basic_graph2'] = neighbor_centrality(graph_2, num_seeds, num_players)[1]
     print('Seeds generated!')
 
     print('Simulating graph 1...')

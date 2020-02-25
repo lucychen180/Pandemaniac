@@ -21,7 +21,7 @@ num_lines = 0 # debugging
 with open('{}.{}.{}'.format(num_players, num_seeds, id) + '_seeds.txt', 'w') as f:
     for round in range(50):
         print('\rround {}/{}'.format(round, 50), end='')
-        seeds = neighbor_centrality(G,num_seeds,num_players,a=0.3)[1]
+        seeds = cluster_neighbor_centrality(G,num_seeds,num_players)
         for node in seeds:
             print(node, file=f)
             num_lines += 1
