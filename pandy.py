@@ -20,7 +20,8 @@ print('number of edges:', G.number_of_edges())
 num_lines = 0 # debugging
 with open('{}.{}.{}'.format(num_players, num_seeds, id) + '_seeds.txt', 'w') as f:
     for round in range(50):
-        seeds = seed_n_nodes_basic(G, num_seeds, num_players)
+        print('\rround {}/{}'.format(round, 50), end='')
+        seeds = neighbor_centrality(G,num_seeds,num_players,a=0.3)[1]
         for node in seeds:
             print(node, file=f)
             num_lines += 1

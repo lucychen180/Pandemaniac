@@ -1,6 +1,7 @@
 import networkx as nx
 import json
 from networkx.algorithms import community
+from networkx.algorithms.core import core_number
 from collections import defaultdict
 import numpy as np
 import math
@@ -18,6 +19,7 @@ def load_graph_from_json(filename):
         for neighbor in adj_lists[node]:
             G.add_edge(node, neighbor)  # nodes are repr by strings 0 to V-1
 
+    G.remove_edges_from(nx.selfloop_edges(G))
     return G
 
 def gravity_centrality(G):
@@ -130,3 +132,30 @@ def seed_n_nodes_basic(G, n, num_players, threshold = 0.75):
     assert len(seeds) == n # idk lol
     # print(seeds)
     return seeds
+
+def neighbor_centrality(G,num_seeds,num_players,a=0.2):
+    """computes centrality of a node based on its core centrality and the core centrality of neighbors and
+        the core centrality of neigbors of neighbors. For some parameter a in [0,1], node v's ranking is given by
+        (core centrality of v) + a*sum(core centrality of neighbors of v)
+        + a^2*sum(core centrality of neighbors of neighbors of v)
+        Paper: https://arxiv.org/pdf/1511.00441.pdf"""
+
+
+    neighbor_centralities = {}
+    core_numbers = core_number(G) #get core number of each vertex in the graph
+    neighbors = {v: list(nx.all_neighbors(G, v)) for v in G}  #{v:neighbors of v} dictionary
+    for v in G:
+        n_centrality = core_numbers[v] #(core centrality of v)
+        neighbors_1 = set(neighbors[v])
+        neighbors_2 = set(itertools.chain.from_iterable([neighbors[w] for w in neighbors_1]))
+        set_diff = neighbors_2.difference(neighbors_1.union(v)) #dist2 neighbors that are neither v nor dist1 neighbors
+        for n in neighbors_1: #1st degree
+            n_centrality += a*core_numbers[n]
+        for n in set_diff: #2nd degree
+            n_centrality += (a**2)*core_numbers[n]
+        neighbor_centralities[v] = n_centrality
+    player_scaling_factor = np.sqrt(num_players-1)
+
+    strategy = heapq.nlargest(math.ceil(player_scaling_factor*num_seeds), neighbor_centralities, key = neighbor_centralities.get)
+    strategy_random = random.sample(strategy,num_seeds)
+    return (neighbor_centralities, strategy_random)
