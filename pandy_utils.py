@@ -58,6 +58,9 @@ def cluster_eigen_neighbor(G, n, num_players):
     return seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
     neighbor_centrality, nx.eigenvector_centrality)
 
+def clusterless_neighbor(G, n, num_players):
+    return seed_by_centrality_measures(G, n, num_players, neighbor_centrality)
+
 def seed_by_cluster(G, n, num_players, seeder, *argv):
     '''
     Passes a seeder function for a graph. Finds the clusters of the graph, then
