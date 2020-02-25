@@ -26,8 +26,8 @@ for num_seeds in range(5, 30, 5):
     # strategy_dict_1['basic_graph1'] = cluster_neighbor_centrality(graph_1, num_seeds, num_players)
     # strategy_dict_2['basic_graph2'] = cluster_neighbor_centrality(graph_2, num_seeds, num_players)
 
-    strategy_dict_1['basic_graph1'] = cluster_eigen_gravity(graph_1, num_seeds, num_players)
-    strategy_dict_2['basic_graph2'] = cluster_eigen_gravity(graph_2, num_seeds, num_players)
+    strategy_dict_1['basic_graph1'] = cluster_eigen_neighbor(graph_1, num_seeds, num_players)
+    strategy_dict_2['basic_graph2'] = cluster_eigen_neighbor(graph_2, num_seeds, num_players)
     print('Seeds generated!')
 
     print('Simulating graph 1...')
