@@ -88,8 +88,9 @@ def seed_n_nodes_basic(G, n, num_players, threshold = 0.75):
     totalranks.sort(key = (lambda node: total_rank_dict[node])) # in order of increasing rank
 
     seeds = []
-    comp = list(community.label_propagation_communities(G)) # girvan newman too slow
-    comp.sort(reverse = True, key = len)
+    # comp = list(community.label_propagation_communities(G)) # girvan newman too slow
+    comp = [list(G.nodes())]
+    # comp.sort(reverse = True, key = len)
 
     # extract only the top clusters that form threshold fraction of nodes
     total_cluster_nodes = 0
@@ -122,7 +123,7 @@ def seed_n_nodes_basic(G, n, num_players, threshold = 0.75):
         cluster = comp[i] # list of nodes in the graph corresponding to cluster
         num_seeds = seed_nums[i]
 
-        possible_seeds = totalranks[:math.ceil(num_seeds * math.sqrt(num_players - 1))]
+        possible_seeds = totalranks[:math.ceil(num_seeds * max(math.sqrt(num_players - 1), 1))]
         cluster_seeds = random.sample(possible_seeds, num_seeds)
         seeds.extend(cluster_seeds)
 
