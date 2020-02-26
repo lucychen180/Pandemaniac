@@ -67,20 +67,16 @@ def possible_cluster_eigen_neighbor(G, n, num_players):
     return seed_by_cluster(G, n, num_players, possible_seeds_by_centrality, \
     neighbor_centrality, nx.eigenvector_centrality)
 
-def clusterless_possible_eigen_neighbor_ksc(G, n, num_players):
+def possible_cluster_neighbor(G, n, num_players):
     return seed_by_cluster(G, n, num_players, possible_seeds_by_centrality, \
-    neighbor_centrality, nx.eigenvector_centrality, nx.between_centrality)
+    neighbor_centrality)
 
 def clusterless_neighbor(G, n, num_players):
     return seed_by_centrality_measures(G, n, num_players, neighbor_centrality)
 
-def clusterless_ksc_neighbor_eigen(G, n, num_players):
-    return seed_by_centrality_measures(G, n, num_players, ksc_centrality, neighbor_centrality, \
+def possible_clusterless_ksc_neighbor_eigen(G, n, num_players):
+    return possible_seeds_by_centrality(G, n, num_players, ksc_centrality, neighbor_centrality, \
     nx.eigenvector_centrality)
-
-def possible_cluster_ksc_neighbor_eigen(G, n, num_players):
-    return seed_by_cluster(G, n, num_players, possible_seeds_by_centrality, \
-    neighbor_centrality, neighbor_centrality, ksc_centrality)
 
 def seed_by_cluster(G, n, num_players, seeder, *argv):
     '''
@@ -105,7 +101,7 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
     # since the best strategy is probably to dominate the large clusters,
     # while ignoring the very small ones (idk?)
 
-    threshold = 0.6 # change if needed
+    threshold = 0.8 # change if needed
 
     # extract only the top clusters that form threshold fraction of nodes
     total_cluster_nodes = 0
@@ -115,6 +111,10 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
         total_cluster_nodes += len(cluster)
         if total_cluster_nodes >= threshold * len(G):
             break
+
+    print(len(clusters))
+    for cluster in clusters:
+        print(len(cluster))
 
     # partition our n seeds among the clusters, s.t. number of seeds given is
     # proportional to cluster size

@@ -23,7 +23,7 @@ num_lines = 0 # debugging
 with open('{}.{}.{}'.format(num_players, num_seeds, id) + '_seeds.txt', 'w') as f:
     start = time.time()
     # # if we're using clustering
-    possible_seeds, seed_nums = possible_cluster_ksc_neighbor_eigen(G, num_seeds, num_players)
+    possible_seeds, seed_nums = possible_cluster_eigen_neighbor(G, num_seeds, num_players)
     # if we're not using clustering
     # possible_seeds = possible_clusterless_ksc_neighbor_eigen(G, num_seeds, num_players)
     for round in range(50):

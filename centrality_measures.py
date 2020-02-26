@@ -2,6 +2,7 @@ import networkx as nx
 from networkx.algorithms.core import core_number
 from networkx.algorithms import community
 import itertools
+import math
 import pprint
 
 def gravity_centrality(G):
@@ -53,6 +54,16 @@ def neighbor_centrality(G, a = 0.2):
         neighbor_centralities[v] = n_centrality
 
     return neighbor_centralities
+
+def voterank(G):
+    voteranks = nx.voterank(G)
+    # convert ranking of nodes to an approximate value
+    res = {}
+    for i in range(len(voteranks)):
+        node = voteranks[i]
+        res[node] = 1 / math.log(i + 2)
+
+    return res
 
 def ksc_centrality(G, alpha = 0.5, beta = 0.5):
     '''
