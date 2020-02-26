@@ -1,6 +1,8 @@
 import networkx as nx
 from networkx.algorithms.core import core_number
+from networkx.algorithms import community
 import itertools
+import pprint
 
 def gravity_centrality(G):
     '''
@@ -51,3 +53,44 @@ def neighbor_centrality(G, a = 0.2):
         neighbor_centralities[v] = n_centrality
 
     return neighbor_centralities
+
+def ksc_centrality(G, alpha = 0.5, beta = 0.5):
+    '''
+    Paper: https://www.researchgate.net/publication/262391998_A_New_Approach_to_Identify_Influential_Spreaders_in_Complex_Networks
+    '''
+    core_numbers = core_number(G)
+    max_core_number = max(core_numbers.values())
+    # internal influence
+    f_internal = {}
+    for v in G:
+        f_internal[v] = core_numbers[v] / max_core_number
+
+    # external influence
+    f_external = {}
+    curr_max_influence = 0
+    comp = list(community.label_propagation_communities(G))
+    comp.sort(reverse = True, key = len)
+    for v in G:
+        # count the influence (total number of neighbors in other communities)
+        influence = 0
+        for cluster in comp:
+            num_neighbors = 0
+            # count number of neighbors in the cluster
+            for node in cluster:
+                if node in G.neighbors(v):
+                    num_neighbors += 1
+            influence += (num_neighbors * len(cluster))
+        f_external[v] = influence
+
+    # normalize by maximum influence
+    max_influence = max(f_external.values())
+    for v in G:
+        f_external[v] = f_external[v] / max_influence
+
+
+    # total influence
+    f_total = {}
+    for v in G:
+        f_total[v] = f_internal[v] * alpha + f_external[v] * beta
+
+    return f_total
