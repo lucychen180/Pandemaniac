@@ -63,9 +63,9 @@ def cluster_eigen_neighbor(G, n, num_players):
     nx.eigenvector_centrality, neighbor_centrality)
     return sum(cluster_seeds, [])
 
-def possible_cluster_eigen_neighbor(G, n, num_players):
+def possible_cluster_eigen_neighbor_degree(G, n, num_players):
     return seed_by_cluster(G, n, num_players, possible_seeds_by_centrality, \
-    neighbor_centrality, nx.eigenvector_centrality)
+    neighbor_centrality, nx.eigenvector_centrality, nx.degree_centrality)
 
 def possible_cluster_neighbor(G, n, num_players):
     return seed_by_cluster(G, n, num_players, possible_seeds_by_centrality, \
@@ -101,7 +101,7 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
     # since the best strategy is probably to dominate the large clusters,
     # while ignoring the very small ones (idk?)
 
-    threshold = 0.8 # change if needed
+    threshold = 0.75 # change if needed
 
     # extract only the top clusters that form threshold fraction of nodes
     total_cluster_nodes = 0
