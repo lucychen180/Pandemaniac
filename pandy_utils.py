@@ -47,15 +47,22 @@ See below for some examples.
 '''
 
 def cluster_eigen_gravity(G, n, num_players):
-    return seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
+    cluster_seeds, seed_nums = seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
     nx.eigenvector_centrality, gravity_centrality)
+    return sum(cluster_seeds, [])
 
 def cluster_neighbor_centrality(G, n, num_players):
-    return seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
+    cluster_seeds, seed_nums = seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
     neighbor_centrality)
+    return sum(cluster_seeds, [])
 
 def cluster_eigen_neighbor(G, n, num_players):
-    return seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
+    cluster_seeds, seed_nums = seed_by_cluster(G, n, num_players, seed_by_centrality_measures, \
+    nx.eigenvector_centrality, neighbor_centrality)
+    return sum(cluster_seeds, [])
+
+def possible_cluster_eigen_neighbor(G, n, num_players):
+    return seed_by_cluster(G, n, num_players, possible_seeds_by_centrality, \
     neighbor_centrality, nx.eigenvector_centrality)
 
 def clusterless_neighbor(G, n, num_players):
@@ -72,6 +79,9 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
     @param seeder: Seeder function of the form seeder(G, n, num_players) that
     returns a list of seeds for G.
     @param argv: extra arguments seeder might need (ex seed_by_centrality_measures)
+    @return seeds, seed_nums: seeds is a list where each element is the seeds assigned
+    for an individual cluster. seed_nums is a list where each element is how many
+    of the n seeds were partitioned to the corresponding cluster.
     '''
     seeds = []
     comp = list(community.label_propagation_communities(G)) # girvan newman too slow
@@ -81,7 +91,7 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
     # since the best strategy is probably to dominate the large clusters,
     # while ignoring the very small ones (idk?)
 
-    threshold = 0.75 # change if needed
+    threshold = 0.6 # change if needed
 
     # extract only the top clusters that form threshold fraction of nodes
     total_cluster_nodes = 0
@@ -113,9 +123,14 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
         cluster = comp[i]
         num_seeds = seed_nums[i]
         cluster_seeds = seeder(G.subgraph(cluster), num_seeds, num_players, *argv)
-        seeds.extend(cluster_seeds)
+        seeds.append(cluster_seeds)
 
-    return seeds
+    assert sum(seed_nums) == n
+    # seeds is an array, each element is a list of seeds for that cluster
+    # (if we passed in possible_..., then it is longer)
+    # seed_nums is an array where each element corresponds to how many seeds
+    # should be partitioned to that cluster
+    return seeds, seed_nums
 
 def seed_by_centrality_measures(G, n, num_players, *argv):
     '''
@@ -142,3 +157,11 @@ def seed_by_centrality_measures(G, n, num_players, *argv):
     possible_seeds = totalranks[:math.ceil(n * player_scaling_factor)]
     seeds = random.sample(possible_seeds, n) # take random n from top ~2n
     return seeds
+
+def possible_seeds_by_centrality(G, n, num_players, *argv):
+    '''
+    Usage is same as above, but now it returns a list of possible seeds for the
+    graph, instead of already sampled seeds.
+    '''
+    scaling_factor = max(np.sqrt(num_players - 1), 1)
+    return seed_by_centrality_measures(G, math.ceil(n * scaling_factor), 2, *argv)
