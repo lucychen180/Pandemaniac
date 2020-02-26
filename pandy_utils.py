@@ -43,6 +43,8 @@ To make a seed generator that separates graph into clusters first, use
 
 seed_by_cluster(G, n, num_players, seed_by_centrality_measures, (centrality_measures))
 
+to generate a tuple cluster_seeds, seed_nums, then join the cluster seeds together. 
+
 See below for some examples.
 '''
 
