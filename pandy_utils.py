@@ -115,7 +115,6 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
     print(len(clusters))
     for cluster in clusters:
         print(len(cluster))
-
     # partition our n seeds among the clusters, s.t. number of seeds given is
     # proportional to cluster size
 

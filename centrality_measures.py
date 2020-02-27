@@ -5,6 +5,14 @@ import itertools
 import math
 import pprint
 
+def normalize_dict(dictionary):
+    d = dictionary.copy()
+    max_v = max(d.values())
+    for v in d.keys():
+        d[v] = d[v] / max_v
+
+    return d
+
 def gravity_centrality(G):
     '''
     Returns the gravity centrality (global) of the graph.
@@ -28,7 +36,7 @@ def gravity_centrality(G):
 
     return res
 
-def neighbor_centrality(G, a = 0.2):
+def neighbor_centrality(G, a = 0.3):
     '''
     Computes the neighbor centrality of a node based on its core centrality and the core centrality of neighbors and
     the core centrality of neigbors of neighbors. For some parameter a in [0,1], node v's ranking is given by
@@ -85,10 +93,11 @@ def ksc_centrality(G, alpha = 0.5, beta = 0.5):
         # count the influence (total number of neighbors in other communities)
         influence = 0
         for cluster in comp:
+            cluster_set = set(cluster)
             num_neighbors = 0
             # count number of neighbors in the cluster
-            for node in cluster:
-                if node in G.neighbors(v):
+            for node in G.neighbors(v):
+                if node in cluster_set:
                     num_neighbors += 1
             influence += (num_neighbors * len(cluster))
         f_external[v] = influence
