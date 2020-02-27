@@ -28,10 +28,17 @@ with open('{}.{}.{}'.format(num_players, num_seeds, id) + '_seeds.txt', 'w') as 
     neighbor_c = neighbor_centrality(G)
     degree_c = nx.degree_centrality(G)
 
-    # seed by cluster? copy pasted code
-    # i will add this shitter in later
+    # # seed by cluster?
+    # clusters, seed_nums = partition_into_clusters(G, num_seeds, num_players)
+        # for i in range(len(clusters)):
+        #     cluster = clusters[i]
+        #     seed_num = seed_nums[i]
+        #     cluster_seeds = seed_by_discount(G.subgraph(cluster), seed_num, num_players, discounters, [neighbor_c, degree_c])
+        #     seeds.extend(cluster_seeds)
 
-    for round in range(50):
+    # final_seeds = select_best_discounts(G, num_seeds, num_players)
+    # for seeds in final_seeds:
+    for _ in range(50):
         seeds = seed_by_discount(G, num_seeds, num_players, discounters, [neighbor_c, degree_c])
         print('\rround {}/{}'.format(round, 50), end='')
         for node in seeds:

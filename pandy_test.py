@@ -1,4 +1,5 @@
 from pandy_utils import *
+from discount_heuristic import *
 import sim
 import pprint
 

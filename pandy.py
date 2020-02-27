@@ -23,22 +23,21 @@ num_lines = 0 # debugging
 with open('{}.{}.{}'.format(num_players, num_seeds, id) + '_seeds.txt', 'w') as f:
     start = time.time()
     # # if we're using clustering
-    possible_seeds, seed_nums = possible_cluster_eigen_neighbor_degree(G, num_seeds, num_players)
+    # possible_seeds, seed_nums = possible_cluster_eigen_neighbor_degree(G, num_seeds, num_players)
     # if we're not using clustering
-    # possible_seeds = possible_clusterless_ksc_neighbor_eigen(G, num_seeds, num_players)
-    for round in range(50):
+    possible_seeds = possible_clusterless_ksc_neighbor_eigen(G, num_seeds, num_players)
+    final_seeds = select_best_combination(G, num_seeds, num_players, possible_seeds)
+    for seeds in final_seeds:
         # if we're using clustering, uncomment
-        seeds = []
-        for i in range(len(possible_seeds)):
-            possible_cluster_seeds = possible_seeds[i]
-            cluster_seed_num = seed_nums[i]
-            cluster_seeds = random.sample(possible_cluster_seeds, cluster_seed_num)
-            seeds.extend(cluster_seeds)
+        # for i in range(len(possible_seeds)):
+        #     possible_cluster_seeds = possible_seeds[i]
+        #     cluster_seed_num = seed_nums[i]
+        #     cluster_seeds = random.sample(possible_cluster_seeds, cluster_seed_num)
+        #     seeds.extend(cluster_seeds)
 
         # # if we're not using clustering, uncomment
         # seeds = random.sample(possible_seeds, num_seeds)
-
-        print('\rround {}/{}'.format(round, 50), end='')
+        # print('\rround {}/{}'.format(round, 50), end='')
         for node in seeds:
             print(node, file=f)
             num_lines += 1

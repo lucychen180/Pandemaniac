@@ -3,9 +3,11 @@ import json
 from networkx.algorithms import community
 from collections import defaultdict
 from centrality_measures import *
+from discount_heuristic import make_dict_from_graph
 import numpy as np
 import math
 import random
+import sim
 import heapq
 
 # Construct undirected graph from json file
@@ -31,6 +33,53 @@ def seed_by_degree(G, n):
     node_degrees = G.degree()
     seeds = heapq.nlargest(n, node_degrees, key = (lambda pair: pair[1]))
     return [tup[0] for tup in seeds]
+
+def select_best_combination(G, n, num_players, possible_seeds, max_iter = 1000):
+    '''
+    Choose the best group of nodes based on simulations against a strategy that
+    picks the best n out of the top 1-2n (random) degree or eigenvector centralities. After,
+    it returns the 50 best groups of nodes.
+    '''
+    round_score = {} # key is round number, value is
+    round_seed = {} # key is round number, value is seed list
+    degree_c = nx.degree_centrality(G)
+    eigen_c = nx.eigenvector_centrality(G)
+    graph_dict = make_dict_from_graph(G)
+    ta_possible_degree_nodes = list(G.nodes())
+    ta_possible_eigen_nodes = list(G.nodes())
+    ta_possible_degree_nodes.sort(reverse = True, key = lambda v: degree_c[v])
+    ta_possible_eigen_nodes.sort(reverse = True, key = lambda v: eigen_c[v])
+    node_lists = {} # pass into sim
+    for i in range(max_iter):
+        print('\rround {}/{}'.format(i, 1000), end='')
+        # generate our nodes
+        seeds = random.sample(possible_seeds, n)
+        node_lists['pandemonium'] = seeds
+
+        # test it 5 times against random ta nodes
+        # build ta nodes; score is how many total nodes it won
+        score = 0
+        for _ in range(3):
+            for dummy_player in range(num_players):
+                ta_nodes = random.choice([ta_possible_eigen_nodes, ta_possible_degree_nodes])
+                rand_scaling_factor = random.uniform(1, 2.5)
+                ta_nodes = random.sample(ta_nodes[:math.ceil(rand_scaling_factor * n)], n)
+                node_lists['TA{}'.format(dummy_player)] = ta_nodes
+
+            results = sim.run(graph_dict, node_lists)
+            score += results['pandemonium']
+
+        round_score[i] = score
+        round_seed[i] = seeds
+
+    # find best 50 scores by node
+    indices = list(round_score.keys())
+    indices.sort(reverse = True, key = lambda i: round_score[i])
+    final_seeds = []
+    for k in range(50):
+        final_seeds.append(round_seed[indices[k]])
+
+    return final_seeds
 
 '''
 Usage: Write a function in centrality_measures.py that computes a centrality measure
@@ -78,22 +127,16 @@ def possible_clusterless_ksc_neighbor_eigen(G, n, num_players):
     return possible_seeds_by_centrality(G, n, num_players, ksc_centrality, neighbor_centrality, \
     nx.eigenvector_centrality)
 
-def seed_by_cluster(G, n, num_players, seeder, *argv):
+def partition_into_clusters(G, n, num_players):
     '''
-    Passes a seeder function for a graph. Finds the clusters of the graph, then
-    runs the seeder function on each cluster, and appends all the results together
-    to form a final list of seeds for the whole graph.
-    @param G: networkx undirected Graph
-    @param n: total number of nodes to seed
+    Partitions a graph into clusters, and partitions the n seeds among the
+    clusters proportional to their size.
+    @param G: graph
+    @param n: number of seeds
     @param num_players: number of players
-    @param seeder: Seeder function of the form seeder(G, n, num_players) that
-    returns a list of seeds for G.
-    @param argv: extra arguments seeder might need (ex seed_by_centrality_measures)
-    @return seeds, seed_nums: seeds is a list where each element is the seeds assigned
-    for an individual cluster. seed_nums is a list where each element is how many
-    of the n seeds were partitioned to the corresponding cluster.
+    @return clusters, seed_nums: clusters is a list of clusters (each is a list of nodes),
+    seed_nums is a list of how many seeds should be partitioned to each cluster.
     '''
-    seeds = []
     comp = list(community.label_propagation_communities(G)) # girvan newman too slow
     comp.sort(reverse = True, key = len)
 
@@ -101,7 +144,7 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
     # since the best strategy is probably to dominate the large clusters,
     # while ignoring the very small ones (idk?)
 
-    threshold = 0.75 # change if needed
+    threshold = 0.3 # change if needed
 
     # extract only the top clusters that form threshold fraction of nodes
     total_cluster_nodes = 0
@@ -132,8 +175,28 @@ def seed_by_cluster(G, n, num_players, seeder, *argv):
             seed_nums.append(num_seeds)
         total_seeds_given += num_seeds
 
+    assert len(clusters) == len(seed_nums)
+    return clusters, seed_nums
+
+def seed_by_cluster(G, n, num_players, seeder, *argv):
+    '''
+    Passes a seeder function for a graph. Finds the clusters of the graph, then
+    runs the seeder function on each cluster, and appends all the results together
+    to form a final list of seeds for the whole graph.
+    @param G: networkx undirected Graph
+    @param n: total number of nodes to seed
+    @param num_players: number of players
+    @param seeder: Seeder function of the form seeder(G, n, num_players) that
+    returns a list of seeds for G.
+    @param argv: extra arguments seeder might need (ex seed_by_centrality_measures)
+    @return seeds, seed_nums: seeds is a list where each element is the seeds assigned
+    for an individual cluster. seed_nums is a list where each element is how many
+    of the n seeds were partitioned to the corresponding cluster.
+    '''
+    seeds = []
+    clusters, seed_nums = partition_into_clusters(G, n, num_players)
     for i in range(len(seed_nums)):
-        cluster = comp[i]
+        cluster = clusters[i]
         num_seeds = seed_nums[i]
         cluster_seeds = seeder(G.subgraph(cluster), num_seeds, num_players, *argv)
         seeds.append(cluster_seeds)
@@ -158,11 +221,11 @@ def seed_by_centrality_measures(G, n, num_players, *argv):
     (ie nx.eigenvector_centrality is such a function)
     '''
     total_centrality = defaultdict(lambda: 1)
-    lst_of_centralities = [measure(G) for measure in argv] # list of dictionaries for different centrality measures
+    lst_of_centralities = [normalize_dict(measure(G)) for measure in argv] # list of dictionaries for different centrality measures
     for centrality_dict in lst_of_centralities:
         for node in centrality_dict:
             assert centrality_dict[node] >= 0 # don't want to multiply by negative
-            total_centrality[node] *= centrality_dict[node]
+            total_centrality[node] += centrality_dict[node]
 
     totalranks = list(total_centrality.keys())
     totalranks.sort(reverse = True, key = (lambda node: total_centrality[node])) # in decreasing order of centrality

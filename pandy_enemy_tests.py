@@ -30,8 +30,6 @@ with open(sys.argv[3], 'r') as f:
         seeds = [f.readline().strip() for _ in range(num_seeds)]
         our_seeds[round] = seeds
 
-print(our_seeds)
-
 # player_seeds: dict with key team name, value is a list of lists of seeds;
 # each nested list are the seeds given to the player for that round
 
@@ -49,6 +47,19 @@ for round in range(50):
     # read our seeds: every num_seeds lines are the seeds for our round
     player_values['pandemonium'] = our_seeds[round]
 
+    # check which of our seeds are boomed
+    boomed_seeds = []
+    surviving_seeds = num_seeds
+    for seed in player_values['pandemonium']:
+        for key in player_values:
+            if key != 'pandemonium':
+                if seed in player_values[key]:
+                    print('Boomed seed: {}'.format(seed))
+                    boomed_seeds.append(seed)
+                    surviving_seeds -= 1
+                    break
+
+    print('Number of surviving seeds: {}'.format(surviving_seeds))
     result = sim.run(G_json, player_values)
     print('Results for round {}'.format(round))
     pprint.pprint(result)
