@@ -5,6 +5,14 @@ import itertools
 import math
 import pprint
 
+def degree_centrality(G):
+    '''
+    Returns the degree centrality of the graph
+    @param G: graph
+    @return dict, keys are nodes, values are centralities
+    '''
+    return {node[0]: node[1] for node in G.degree()}
+
 def normalize_dict(dictionary):
     d = dictionary.copy()
     max_v = max(d.values())

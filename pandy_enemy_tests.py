@@ -30,6 +30,8 @@ with open(sys.argv[3], 'r') as f:
         seeds = [f.readline().strip() for _ in range(num_seeds)]
         our_seeds[round] = seeds
 
+print(our_seeds)
+
 # player_seeds: dict with key team name, value is a list of lists of seeds;
 # each nested list are the seeds given to the player for that round
 
