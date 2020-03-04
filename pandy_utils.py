@@ -241,3 +241,33 @@ def possible_seeds_by_centrality(G, n, num_players, *argv):
     '''
     scaling_factor = max(np.sqrt(num_players - 1), 1)
     return seed_by_centrality_measures(G, math.ceil(n * scaling_factor), 2, *argv)
+
+def greedy(G,num_seeds):
+     '''
+    Seeds a graph based on a greedy algorithm that iteratively builds the seed set
+    by simulating performance of different sets of nodes vs highest degree strategy.
+    @param G: graph
+    @param n: number of seeds
+    '''
+    nxG = load_graph_from_json(G)
+    node_set = set(list(nxG.nodes))
+    with open(G, 'r') as f:
+        graph_json = json.load(f)
+    
+    seeds = []
+    for i in range(num_seeds):
+        scores = {} #dictionary mapping node ids to their socre for this round of seeding
+        seedset = set(seeds)
+        potential_adds = node_set.difference(seedset)#consider every node we haven't picked yet
+        for node in potential_adds:
+            test_seed_set = seeds.copy()
+            test_seed_set.append(node)
+            strategy_dict = {}
+            strategy_dict['TA'] = seed_n_nodes_degree(nxG, i+1) #TA strategy is by degree
+            strategy_dict['US'] = test_seed_set #test vs this test set of nodes
+            results = sim.run(graph_json,strategy_dict)
+            score = results['US']-results['TA'] #calculate score for each node (difference in nodes conquered) 
+            scores[node] = score
+        best_node = heapq.nlargest(1,scores,key=scores.get) #add the node that got the best score
+        seeds.append(best_node[0])
+    return seeds
