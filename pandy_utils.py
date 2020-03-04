@@ -246,8 +246,8 @@ def greedy(G,num_seeds):
      '''
     Seeds a graph based on a greedy algorithm that iteratively builds the seed set
     by simulating performance of different sets of nodes vs highest degree strategy.
-    @param G: graph
-    @param n: number of seeds
+    @param G: graph (in json format)
+    @param num_seeds: number of seeds
     '''
     nxG = load_graph_from_json(G)
     node_set = set(list(nxG.nodes))
